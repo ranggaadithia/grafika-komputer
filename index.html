@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Garis dan Lingkaran dengan Pilihan Algoritma dan Warna</title>
+    <style>
+      #canvas {
+        border: 1px solid #ccc;
+      }
+      .active {
+        background-color: #f87171;
+        color: white;
+      }
+      .color-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        transition: border-color 0.3s;
+      }
+      .color-btn.active-color {
+        border-color: blue;
+        border-width: 3px;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="p-6">
+    <h2 class="text-lg font-bold mb-4">
+      Klik dua titik untuk menggambar garis atau lingkaran menggunakan algoritma
+    </h2>
+    <div class="flex gap-4 mb-4">
+      <button id="bruteForceBtn" class="px-4 py-2 bg-gray-200 rounded">
+        Brute Force
+      </button>
+      <button id="ddaBtn" class="px-4 py-2 bg-gray-200 rounded">DDA</button>
+      <button id="bresenhamBtn" class="px-4 py-2 bg-gray-200 rounded active">
+        Bresenham
+      </button>
+      <button id="circleBtn" class="px-4 py-2 bg-gray-200 rounded">
+        Lingkaran Bresenham
+      </button>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <div id="redColor" class="color-btn bg-red-500"></div>
+      <div id="greenColor" class="color-btn bg-green-500"></div>
+      <div id="blueColor" class="color-btn bg-blue-500"></div>
+      <div id="blackColor" class="color-btn bg-black"></div>
+    </div>
+    <canvas id="canvas" width="1000" height="500"></canvas>
+
+    <script src="index.js"></script>
+  </body>
+</html>
