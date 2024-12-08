@@ -1,11 +1,11 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const points = [];
-let selectedAlgorithm = "bresenham";
-let lineColor = "red";
+ctx.fillStyle = "black";
+
+let coordinates = [];
+let connections = [];
 
 function drawPoint(x, y) {
-  ctx.fillStyle = lineColor;
   ctx.fillRect(x, y, 2, 2);
 }
 
@@ -17,6 +17,7 @@ function drawLineBruteForce(x0, y0, x1, y1) {
   const yIncrement = dy / steps;
   let x = x0;
   let y = y0;
+
   for (let i = 0; i <= steps; i++) {
     drawPoint(Math.round(x), Math.round(y));
     x += xIncrement;
@@ -24,166 +25,113 @@ function drawLineBruteForce(x0, y0, x1, y1) {
   }
 }
 
-function drawLineDDA(x0, y0, x1, y1) {
-  const dx = x1 - x0;
-  const dy = y1 - y0;
-  const steps = Math.max(Math.abs(dx), Math.abs(dy));
-  const xIncrement = dx / steps;
-  const yIncrement = dy / steps;
-  let x = x0;
-  let y = y0;
-  for (let i = 0; i <= steps; i++) {
-    drawPoint(Math.round(x), Math.round(y));
-    x += xIncrement;
-    y += yIncrement;
-  }
+function parseCSV(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = reader.result.trim().split("\n");
+      const data = lines.map((line) => line.split(",").map(Number));
+      resolve(data);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
 }
 
-function drawLineBresenham(x0, y0, x1, y1) {
-  let dx = Math.abs(x1 - x0);
-  let dy = Math.abs(y1 - y0);
-  let sx = x0 < x1 ? 1 : -1;
-  let sy = y0 < y1 ? 1 : -1;
-  let err = dx - dy;
+function applyTransformations(coordinates, scale, rotationAngle, translateX, translateY) {
+  const rad = (rotationAngle * Math.PI) / 180; // Convert degrees to radians
 
-  while (true) {
-    drawPoint(x0, y0);
+  // Transformation matrices
+  const scaleMatrix = [
+    [scale, 0, 0],
+    [0, scale, 0],
+  ];
 
-    if (x0 === x1 && y0 === y1) break;
-    let e2 = 2 * err;
-    if (e2 > -dy) {
-      err -= dy;
-      x0 += sx;
+  // Rotation matrix
+  const rotationMatrix = [
+    [Math.cos(rad), -Math.sin(rad)],
+    [Math.sin(rad), Math.cos(rad)],
+  ];
+
+  const numPoints = coordinates.length;
+  const centroid = coordinates.reduce(
+    (acc, [_, x, y]) => [acc[0] + x, acc[1] + y],
+    [0, 0]
+  ).map((val) => val / numPoints);
+
+  return coordinates.map(([id, x, y, z]) => {
+    const translatedX = x - centroid[0];
+    const translatedY = y - centroid[1];
+
+    const [scaledX, scaledY] = [
+      scaleMatrix[0][0] * translatedX + scaleMatrix[0][1] * translatedY,
+      scaleMatrix[1][0] * translatedX + scaleMatrix[1][1] * translatedY,
+    ];
+
+    const [rotatedX, rotatedY] = [
+      rotationMatrix[0][0] * scaledX + rotationMatrix[0][1] * scaledY,
+      rotationMatrix[1][0] * scaledX + rotationMatrix[1][1] * scaledY,
+    ];
+
+    const finalX = rotatedX + centroid[0] + translateX;
+    const finalY = rotatedY + centroid[1] + translateY;
+
+    return [id, finalX, finalY, z];
+  });
+}
+
+
+
+function drawShape() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+  connections.forEach(([startIndex, endIndex]) => {
+    const start = coordinates[startIndex - 1];
+    const end = coordinates[endIndex - 1];
+    if (start && end) {
+      drawLineBruteForce(start[1], start[2], end[1], end[2]);
     }
-    if (e2 < dx) {
-      err += dx;
-      y0 += sy;
-    }
-  }
+  });
 }
 
-function drawCircleBresenham(xc, yc, radius) {
-  let x = 0;
-  let y = radius;
-  let d = 3 - 2 * radius;
+document.getElementById("drawBtn").addEventListener("click", async () => {
+  const coordinatesFile = document.getElementById("coordinatesFile").files[0];
+  const connectionsFile = document.getElementById("connectionsFile").files[0];
 
-  function drawCirclePoints(xc, yc, x, y) {
-    drawPoint(xc + x, yc + y);
-    drawPoint(xc - x, yc + y);
-    drawPoint(xc + x, yc - y);
-    drawPoint(xc - x, yc - y);
-    drawPoint(xc + y, yc + x);
-    drawPoint(xc - y, yc + x);
-    drawPoint(xc + y, yc - x);
-    drawPoint(xc - y, yc - x);
+  if (!coordinatesFile || !connectionsFile) {
+    alert("Silakan pilih kedua file!");
+    return;
   }
 
-  drawCirclePoints(xc, yc, x, y);
-  while (y >= x) {
-    x++;
-    if (d > 0) {
-      y--;
-      d = d + 4 * (x - y) + 10;
-    } else {
-      d = d + 4 * x + 6;
-    }
-    drawCirclePoints(xc, yc, x, y);
-  }
-}
-
-function drawShape(x0, y0, x1, y1) {
-  if (selectedAlgorithm === "bruteForce") {
-    drawLineBruteForce(x0, y0, x1, y1);
-  } else if (selectedAlgorithm === "dda") {
-    drawLineDDA(x0, y0, x1, y1);
-  } else if (selectedAlgorithm === "bresenham") {
-    drawLineBresenham(x0, y0, x1, y1);
-  } else if (selectedAlgorithm === "circle") {
-    const radius = Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2));
-    drawCircleBresenham(x0, y0, Math.round(radius));
-  }
-}
-
-canvas.addEventListener("click", function (event) {
-  const rect = canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  points.push({ x, y });
-  drawPoint(x, y);
-
-  if (points.length === 2) {
-    drawShape(points[0].x, points[0].y, points[1].x, points[1].y);
-    points.length = 0;
+  try {
+    coordinates = await parseCSV(coordinatesFile);
+    connections = await parseCSV(connectionsFile);
+    drawShape(); 
+  } catch (error) {
+    alert("Terjadi kesalahan saat membaca file: " + error.message);
   }
 });
 
-function setActiveButton(algorithm) {
-  selectedAlgorithm = algorithm;
+document
+  .getElementById("applyTransformBtn")
+  .addEventListener("click", () => {
+    const scaleInput = parseFloat(document.getElementById("scaleInput").value);
+    const rotationInput = parseFloat(
+      document.getElementById("rotationInput").value
+    );
+    const translateXInput = parseFloat(
+      document.getElementById("translateXInput").value
+    );
+    const translateYInput = parseFloat(
+      document.getElementById("translateYInput").value
+    );
 
-  document.getElementById("bruteForceBtn").classList.remove("active");
-  document.getElementById("ddaBtn").classList.remove("active");
-  document.getElementById("bresenhamBtn").classList.remove("active");
-  document.getElementById("circleBtn").classList.remove("active");
-
-  if (algorithm === "bruteForce") {
-    document.getElementById("bruteForceBtn").classList.add("active");
-  } else if (algorithm === "dda") {
-    document.getElementById("ddaBtn").classList.add("active");
-  } else if (algorithm === "bresenham") {
-    document.getElementById("bresenhamBtn").classList.add("active");
-  } else if (algorithm === "circle") {
-    document.getElementById("circleBtn").classList.add("active");
-  }
-}
-
-function setActiveColor(colorElement) {
-  document.querySelectorAll(".color-btn").forEach((btn) => {
-    btn.classList.remove("active-color");
-  });
-  colorElement.classList.add("active-color");
-}
-
-document
-  .getElementById("bruteForceBtn")
-  .addEventListener("click", function () {
-    setActiveButton("bruteForce");
-  });
-document.getElementById("ddaBtn").addEventListener("click", function () {
-  setActiveButton("dda");
-});
-document
-  .getElementById("bresenhamBtn")
-  .addEventListener("click", function () {
-    setActiveButton("bresenham");
-  });
-document
-  .getElementById("circleBtn")
-  .addEventListener("click", function () {
-    setActiveButton("circle");
-  });
-
-document
-  .getElementById("redColor")
-  .addEventListener("click", function () {
-    lineColor = "red";
-    setActiveColor(this);
-  });
-document
-  .getElementById("greenColor")
-  .addEventListener("click", function () {
-    lineColor = "green";
-    setActiveColor(this);
-  });
-document
-  .getElementById("blueColor")
-  .addEventListener("click", function () {
-    lineColor = "blue";
-    setActiveColor(this);
-  });
-document
-  .getElementById("blackColor")
-  .addEventListener("click", function () {
-    lineColor = "black";
-    setActiveColor(this);
+    coordinates = applyTransformations(
+      coordinates,
+      scaleInput,
+      rotationInput,
+      translateXInput,
+      translateYInput
+    );
+    drawShape(); 
   });

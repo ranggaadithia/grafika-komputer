@@ -1,52 +1,79 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Garis dan Lingkaran dengan Pilihan Algoritma dan Warna</title>
+    <title>Garis dari CSV dengan Transformasi Geometri</title>
     <style>
       #canvas {
         border: 1px solid #ccc;
-      }
-      .active {
-        background-color: #f87171;
-        color: white;
-      }
-      .color-btn {
-        width: 30px;
-        height: 30px;
-        border: 1px solid #ccc;
-        cursor: pointer;
-        transition: border-color 0.3s;
-      }
-      .color-btn.active-color {
-        border-color: blue;
-        border-width: 3px;
       }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="p-6">
-    <h2 class="text-lg font-bold mb-4">
-      Klik dua titik untuk menggambar garis atau lingkaran menggunakan algoritma
-    </h2>
-    <div class="flex gap-4 mb-4">
-      <button id="bruteForceBtn" class="px-4 py-2 bg-gray-200 rounded">
-        Brute Force
-      </button>
-      <button id="ddaBtn" class="px-4 py-2 bg-gray-200 rounded">DDA</button>
-      <button id="bresenhamBtn" class="px-4 py-2 bg-gray-200 rounded active">
-        Bresenham
-      </button>
-      <button id="circleBtn" class="px-4 py-2 bg-gray-200 rounded">
-        Lingkaran Bresenham
-      </button>
+    <h2 class="text-lg font-bold mb-4">Tugas Grafika Komputer</h2>
+    <div class="mb-4">
+      <label for="coordinatesFile" class="block font-bold"
+        >File Koordinat:</label
+      >
+      <input type="file" id="coordinatesFile" accept=".csv" />
     </div>
-    <div class="flex gap-2 mb-4">
-      <div id="redColor" class="color-btn bg-red-500"></div>
-      <div id="greenColor" class="color-btn bg-green-500"></div>
-      <div id="blueColor" class="color-btn bg-blue-500"></div>
-      <div id="blackColor" class="color-btn bg-black"></div>
+    <div class="mb-4">
+      <label for="connectionsFile" class="block font-bold"
+        >File Pasangan Titik:</label
+      >
+      <input type="file" id="connectionsFile" accept=".csv" />
     </div>
-    <canvas id="canvas" width="1000" height="500"></canvas>
+    <div class="mb-4">
+      <label for="scaleInput" class="block font-bold">Skala:</label>
+      <input
+        type="number"
+        id="scaleInput"
+        step="0.1"
+        value="1"
+        class="border px-2 py-1"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="rotationInput" class="block font-bold">Rotasi:</label>
+      <input
+        type="number"
+        id="rotationInput"
+        step="1"
+        value="0"
+        class="border px-2 py-1"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="translateXInput" class="block font-bold">Translasi X:</label>
+      <input
+        type="number"
+        id="translateXInput"
+        step="1"
+        value="0"
+        class="border px-2 py-1"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="translateYInput" class="block font-bold">Translasi Y:</label>
+      <input
+        type="number"
+        id="translateYInput"
+        step="1"
+        value="0"
+        class="border px-2 py-1"
+      />
+    </div>
+    <button id="drawBtn" class="px-4 py-2 bg-blue-500 text-white rounded mb-4">
+      Gambar Garis
+    </button>
+    <button
+      id="applyTransformBtn"
+      class="px-4 py-2 bg-green-500 text-white rounded"
+    >
+      Terapkan Transformasi
+    </button>
+
+    <canvas id="canvas" width="1000" height="500" class="mt-4"></canvas>
 
     <script src="index.js"></script>
   </body>
